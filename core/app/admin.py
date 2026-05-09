@@ -25,17 +25,32 @@ class PatientMedicalInfoInline(admin.StackedInline):
 	model = PatientMedicalInfo
 	fk_name = 'patient'
 	can_delete = False
+	extra = 1
 	max_num = 1
+	show_change_link = True
 	verbose_name = 'Medical Information'
 	verbose_name_plural = 'Medical Information'
 	filter_horizontal = ('comorbidities',)
+	fields = (
+		'blood_group',
+		'family_history',
+		'known_allergies',
+		'smokes',
+		'alcoholic',
+		'comorbidities',
+	)
+
+	def get_extra(self, request, obj=None, **kwargs):
+		if obj and hasattr(obj, 'patientmedicalinfo'):
+			return 0
+		return 1
 
 
 class PatientDoctorMappingInline(admin.TabularInline):
 	model = PatientDoctorMapping
 	extra = 0
-	fields = ('doctor', 'assigned_at', 'is_active')
-	readonly_fields = ('assigned_at',)
+	fields = ('id', 'doctor', 'assigned_at', 'is_active')
+	readonly_fields = ('id', 'assigned_at',)
 
 
 @admin.register(PatientProfile)
@@ -130,7 +145,7 @@ class DoctorAdmin(admin.ModelAdmin):
 
 @admin.register(PatientDoctorMapping)
 class PatientDoctorMappingAdmin(admin.ModelAdmin):
-	list_display = ('patient_link', 'doctor_link', 'assigned_at', 'is_active')
+	list_display = ('id', 'patient_link', 'doctor_link', 'assigned_at', 'is_active')
 	search_fields = ('patient__first_name', 'patient__last_name', 'doctor__name')
 	list_filter = ('is_active', 'doctor')
 	raw_id_fields = ('patient', 'doctor')
