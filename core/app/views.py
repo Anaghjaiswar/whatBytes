@@ -1,15 +1,16 @@
-from django.shortcuts import render
 from django.contrib.auth import get_user_model
 from rest_framework import generics, status
 from rest_framework.response import Response
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.tokens import RefreshToken
+from .models import PatientProfile
 
 from .serializers import (
 	RegisterSerializer,
 	CustomTokenObtainPairSerializer,
 	UserSerializer,
+	PatientProfileSerializer,
 )
 
 User = get_user_model()
@@ -36,4 +37,25 @@ class RegisterAPIView(generics.CreateAPIView):
 class LoginAPIView(TokenObtainPairView):
 	permission_classes = (AllowAny,)
 	serializer_class = CustomTokenObtainPairSerializer
+
+
+class PatientListCreateAPIView(generics.ListCreateAPIView):
+	serializer_class = PatientProfileSerializer
+	permission_classes = (IsAuthenticated,)
+
+	def get_queryset(self):
+		return PatientProfile.objects.filter(created_by=self.request.user).order_by("-date_registered")
+
+	def perform_create(self, serializer):
+		serializer.save(created_by=self.request.user)
+
+
+class PatientDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
+	serializer_class = PatientProfileSerializer
+	permission_classes = (IsAuthenticated,)
+	lookup_field = "id"
+	lookup_url_kwarg = "id"
+
+	def get_queryset(self):
+		return PatientProfile.objects.filter(created_by=self.request.user)
 
