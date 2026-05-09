@@ -7,6 +7,8 @@ from .views import (
     PatientDetailAPIView,
     DoctorListCreateAPIView,
     DoctorDetailAPIView,
+     MappingListCreateAPIView,
+     MappingByPatientOrDeleteAPIView,
 )
 
 urlpatterns = [
@@ -17,4 +19,6 @@ urlpatterns = [
     path('patients/<int:id>/', PatientDetailAPIView.as_view(), name='patient_detail'),
     path('doctors/', DoctorListCreateAPIView.as_view(), name='doctor_list_create'),
     path('doctors/<int:id>/', DoctorDetailAPIView.as_view(), name='doctor_detail'),
+     path('mappings/', MappingListCreateAPIView.as_view(), name='mapping_list_create'),
+     path('mappings/<int:patient_id>/', MappingByPatientOrDeleteAPIView.as_view(), name='mapping_by_patient_or_delete'),
 ]

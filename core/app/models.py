@@ -3,6 +3,8 @@ from datetime import date
 from django.core.validators import RegexValidator
 from django.conf import settings
 from django.db import transaction
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 
 
 
@@ -156,3 +158,9 @@ class PatientDoctorMapping(models.Model):
 
     def __str__(self):
         return f"{self.patient.get_full_name()} assigned to {self.doctor.name}"
+
+
+@receiver(post_save, sender=PatientProfile)
+def create_file_record_for_patient(sender, instance, created, **kwargs):
+    if created:
+        FileRecord.objects.get_or_create(patient=instance)

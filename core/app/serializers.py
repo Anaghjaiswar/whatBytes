@@ -5,7 +5,7 @@ from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer #type:ignore
 from rest_framework_simplejwt.tokens import RefreshToken #type:ignore
 
-from .models import PatientProfile, Doctor
+from .models import PatientProfile, Doctor, PatientDoctorMapping
 
 User = get_user_model()
 
@@ -59,6 +59,7 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
 
 class PatientProfileSerializer(serializers.ModelSerializer):
 	age = serializers.SerializerMethodField(read_only=True)
+	file_record = serializers.SerializerMethodField(read_only=True)
 	created_by = serializers.HiddenField(default=serializers.CurrentUserDefault())
 
 	class Meta:
@@ -75,11 +76,21 @@ class PatientProfileSerializer(serializers.ModelSerializer):
 			"date_registered",
 			"created_by",
 			"age",
+			"file_record",
 		)
-		read_only_fields = ("id", "date_registered", "age")
+		read_only_fields = ("id", "date_registered", "age", "file_record")
 
 	def get_age(self, obj):
 		return obj.get_age()
+
+	def get_file_record(self, obj):
+		file_record = getattr(obj, "file_record", None)
+		if not file_record:
+			return None
+		return {
+			"internal_file_number": file_record.internal_file_number,
+			"external_file_number": file_record.external_file_number,
+		}
 
 	def validate_date_of_birth(self, value):
 		if value > date.today():
@@ -124,4 +135,31 @@ class DoctorSerializer(serializers.ModelSerializer):
 		if queryset.exists():
 			raise serializers.ValidationError("A doctor with this email already exists.")
 		return value
+
+
+class PatientDoctorMappingSerializer(serializers.ModelSerializer):
+	patient = serializers.PrimaryKeyRelatedField(queryset=PatientProfile.objects.all())
+	doctor = serializers.PrimaryKeyRelatedField(queryset=Doctor.objects.all())
+	patient_name = serializers.CharField(source="patient.get_full_name", read_only=True)
+	doctor_name = serializers.CharField(source="doctor.get_full_name", read_only=True)
+
+	class Meta:
+		model = PatientDoctorMapping
+		fields = (
+			"id",
+			"patient",
+			"doctor",
+			"patient_name",
+			"doctor_name",
+			"assigned_at",
+			"is_active",
+		)
+		read_only_fields = ("id", "assigned_at", "is_active", "patient_name", "doctor_name")
+
+	def validate(self, attrs):
+		patient = attrs.get("patient")
+		doctor = attrs.get("doctor")
+		if PatientDoctorMapping.objects.filter(patient=patient, doctor=doctor).exists():
+			raise serializers.ValidationError("This doctor is already assigned to this patient.")
+		return attrs
 
