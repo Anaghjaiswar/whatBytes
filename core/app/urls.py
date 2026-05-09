@@ -5,6 +5,8 @@ from .views import (
     LoginAPIView,
     PatientListCreateAPIView,
     PatientDetailAPIView,
+    DoctorListCreateAPIView,
+    DoctorDetailAPIView,
 )
 
 urlpatterns = [
@@ -13,4 +15,6 @@ urlpatterns = [
     path('auth/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('patients/', PatientListCreateAPIView.as_view(), name='patient_list_create'),
     path('patients/<int:id>/', PatientDetailAPIView.as_view(), name='patient_detail'),
+    path('doctors/', DoctorListCreateAPIView.as_view(), name='doctor_list_create'),
+    path('doctors/<int:id>/', DoctorDetailAPIView.as_view(), name='doctor_detail'),
 ]

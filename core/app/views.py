@@ -4,13 +4,14 @@ from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.tokens import RefreshToken
-from .models import PatientProfile
+from .models import PatientProfile, Doctor
 
 from .serializers import (
 	RegisterSerializer,
 	CustomTokenObtainPairSerializer,
 	UserSerializer,
 	PatientProfileSerializer,
+	DoctorSerializer,
 )
 
 User = get_user_model()
@@ -58,4 +59,25 @@ class PatientDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
 
 	def get_queryset(self):
 		return PatientProfile.objects.filter(created_by=self.request.user)
+
+
+class DoctorListCreateAPIView(generics.ListCreateAPIView):
+	serializer_class = DoctorSerializer
+	permission_classes = (IsAuthenticated,)
+
+	def get_queryset(self):
+		return Doctor.objects.all().order_by("name")
+
+	def perform_create(self, serializer):
+		serializer.save(created_by=self.request.user)
+
+
+class DoctorDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
+	serializer_class = DoctorSerializer
+	permission_classes = (IsAuthenticated,)
+	lookup_field = "id"
+	lookup_url_kwarg = "id"
+
+	def get_queryset(self):
+		return Doctor.objects.all()
 

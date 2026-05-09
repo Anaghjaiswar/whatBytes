@@ -5,7 +5,7 @@ from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer #type:ignore
 from rest_framework_simplejwt.tokens import RefreshToken #type:ignore
 
-from .models import PatientProfile
+from .models import PatientProfile, Doctor
 
 User = get_user_model()
 
@@ -92,5 +92,36 @@ class PatientProfileSerializer(serializers.ModelSerializer):
 			queryset = queryset.exclude(pk=self.instance.pk)
 		if queryset.exists():
 			raise serializers.ValidationError("A patient with this email already exists.")
+		return value
+
+
+class DoctorSerializer(serializers.ModelSerializer):
+	created_by = serializers.HiddenField(default=serializers.CurrentUserDefault())
+
+	class Meta:
+		model = Doctor
+		fields = (
+			"id",
+			"name",
+			"contact_no",
+			"email",
+			"highest_qualification",
+			"specialization",
+			"years_of_experience",
+			"created_by",
+		)
+		read_only_fields = ("id",)
+
+	def validate_years_of_experience(self, value):
+		if value < 0:
+			raise serializers.ValidationError("Years of experience cannot be negative.")
+		return value
+
+	def validate_email(self, value):
+		queryset = Doctor.objects.filter(email__iexact=value)
+		if self.instance:
+			queryset = queryset.exclude(pk=self.instance.pk)
+		if queryset.exists():
+			raise serializers.ValidationError("A doctor with this email already exists.")
 		return value
 
